@@ -1,0 +1,103 @@
+---
+title: "Week 10"
+author: "Yegin Genc"
+date: "11/25/2019"
+output: html_document
+---
+
+```{r}
+require(tidyverse)
+sample=read_csv('D:/Into data mining, visulization(Prof.yegin)/sample.csv')
+```
+```{r}
+sample
+```
+```{r}
+sample2=rbind(sample, c('P13', 26.5,50000, 'z_Bought?'))
+
+sample2=sample2%>%mutate(Age=as.numeric(Age), Income=as.numeric(Income))
+ggplot(sample2)+geom_point(aes(x=as.numeric(Age), y=Income, color=Bought)) +
+                geom_text(aes(x=Age, y=Income, label=Id))
+
+```
+
+```{r}
+sample2%>%mutate(dist_to_P13=  sqrt((Age-26.5)^2 + (Income-50000)^2)) %>%arrange(dist_to_P13)
+```
+```{r}
+sample3=sample2%>%mutate(Age= (Age-min(Age))/(max(Age)-min(Age)) , 
+                         Income=(Income-min(Income) ) / (max(Income)-min(Income)))
+ggplot(sample3)+geom_point(aes(x=Age, y=Income , color=Bought))
+```
+```{r}
+sample3%>%mutate(dist_to_P13=  sqrt((Age-0.035)^2 + (Income-0.18)^2)) %>%arrange(dist_to_P13)
+```
+```{r}
+#install.packages('class')
+require(class)
+#knn()
+```
+```{r}
+require(tidyverse)
+sample=read_csv('D:/Into data mining, visulization(Prof.yegin)/sample.csv')
+```
+## Selecting Variables
+```{r}
+sample
+dataset=sample%>%select(Age, Income, Bought)
+
+dataset
+```
+
+## Normalize the data
+```{r}
+normalize<-function(x){
+  (x-min(x))/(max(x)-min(x))
+}
+
+# dataset%>%mutate(age_n=normalize(Age),
+#                  income_n=normalize(Income))
+
+data_n=dataset%>%mutate_if(is.numeric, normalize)
+```
+
+## Split Data
+```{r}
+data_n=data_n%>%mutate(id=row_number())
+data_n
+
+set.seed(1234)
+#Select training data
+training.data=data_n%>%sample_frac(size = .6)
+
+#Select testing data
+testing.data=data_n%>%anti_join(training.data, by='id')
+
+#selecting training input
+training.input=training.data%>%select(-Bought, -id)
+testing.input=testing.data%>%select(-Bought, -id)
+
+#training label
+training.label=training.data$Bought
+testing.label=testing.data$Bought
+```
+### Run knn
+```{r}
+
+#install.packages('class')
+require(class)
+```
+
+```{r}
+set.seed(33333)
+predictions=knn(train=training.input, cl=training.label, test=testing.input , k=1)
+```
+
+
+```{r}
+data.frame(predictions, testing.label)
+```
+```{r}
+sum(predictions==testing.label )  / length(predictions)
+```
+
